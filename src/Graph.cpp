@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 inline double sqr(double a) { return a*a;}
 inline double toRadian(double deg) { return (deg*M_PI)/180;}
