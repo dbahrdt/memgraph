@@ -1,4 +1,4 @@
-#include "Graph.h"
+#include <memgraph/Graph.h>
 #include <osmpbf/parsehelpers.h>
 #include <osmpbf/filter.h>
 #include <osmpbf/iway.h>

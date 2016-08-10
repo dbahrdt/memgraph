@@ -1,5 +1,5 @@
-#ifndef SIMPLE_ROUTE_GRAPH_SELF_CONTAINED_H
-#define SIMPLE_ROUTE_GRAPH_SELF_CONTAINED_H
+#ifndef MEMGRAPH_GRAPH_H
+#define MEMGRAPH_GRAPH_H
 #include <vector>
 #include <limits>
 #include <stdint.h>

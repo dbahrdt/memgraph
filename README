@@ -1,2 +1,14 @@
 Clone with:
 git clone --recursive
+
+If you want to use this inside your project do the following:
+
+add_subdirectory(vendor/memgraph memgraph)
+
+include_directories(
+	${MEMGRAPH_INCLUDE_DIR}
+)
+
+and add MEMGRAPH_SOURCES_CPP to your build files.
+
+Graph.cpp needs osmpbf to work!
