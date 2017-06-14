@@ -91,6 +91,8 @@ public:
 	typedef std::vector<Node> NodeContainer;
 	typedef std::vector<Edge> EdgeContainer;
 	
+	typedef NodeInfoContainer::const_iterator ConstNodeInfoIterator;
+	typedef NodeContainer::const_iterator ConstNodeIterator;
 	typedef EdgeContainer::const_iterator ConstEdgeIterator;
 	
 public:
@@ -101,14 +103,18 @@ public:
 	Graph & operator=(const Graph & other);
 	Graph & operator=(Graph && other);
 	
+	inline const NodeInfoContainer & nodeInfos() const { return m_nodeInfo; }
+	inline const NodeContainer & nodes() const { return m_nodes; }
+	inline const EdgeContainer & edges() const { return m_edges; }
+	
 	inline uint32_t nodeCount() const { return  m_nodes.size(); }
 	inline uint32_t edgeCount() const { return m_edges.size(); }
 	
-	const NodeInfo & nodeInfo(uint32_t pos) const { return m_nodeInfo.at(pos); }
-	const Node & node(uint32_t pos) const { return m_nodes.at(pos); }
-	ConstEdgeIterator edgesBegin(uint32_t nodeId) const { return m_edges.cbegin()+m_nodes.at(nodeId).begin; }
-	ConstEdgeIterator edgesEnd(uint32_t nodeId) const { return m_edges.cbegin()+m_nodes.at(nodeId).end; }
-	const Edge & edge(uint32_t pos) const { return m_edges.at(pos); }
+	inline const NodeInfo & nodeInfo(uint32_t pos) const { return m_nodeInfo.at(pos); }
+	inline const Node & node(uint32_t pos) const { return m_nodes.at(pos); }
+	inline ConstEdgeIterator edgesBegin(uint32_t nodeId) const { return m_edges.cbegin()+m_nodes.at(nodeId).begin; }
+	inline ConstEdgeIterator edgesEnd(uint32_t nodeId) const { return m_edges.cbegin()+m_nodes.at(nodeId).end; }
+	inline const Edge & edge(uint32_t pos) const { return m_edges.at(pos); }
 	
 	///@param vehicleMaxSpeed in km/h
 	Route routeInfo(std::vector<uint32_t> && route, double vehicleMaxSpeed, int accessType);
