@@ -127,7 +127,7 @@ public:
 	bool selfCheck();
 	
 public:
-	static Graph fromPBF(const std::string & path);
+	static Graph fromPBF(const std::string & path, int accessTypes = Edge::AT_ALL);
 private:
 	NodeInfoContainer m_nodeInfo;
 	NodeContainer m_nodes;

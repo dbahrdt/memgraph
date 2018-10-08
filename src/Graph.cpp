@@ -165,7 +165,12 @@ struct PBFParseState {
 		//read only access
 		std::unordered_map<std::string, Graph::Edge::EdgeTypes> hw2EdgeType;
 		std::unordered_map<std::string, int> hw2AccessAllowance;
-		SharedData() : candidateWayCount(0) {
+		int accessTypes; //access types the graph should support
+		
+		SharedData(int accessTypes) :
+		candidateWayCount(0),
+		accessTypes(accessTypes)
+		{
 			for(int i(Graph::Edge::ET_BEGIN); i < Graph::Edge::ET_END; ++i) {
 				std::string hwValue(Graph::Edge::edge_type_2_osm_highway_value[i]);
 				hw2EdgeType[hwValue] = (Graph::Edge::EdgeTypes)i;
@@ -210,15 +215,15 @@ struct PBFParseState {
 	std::shared_ptr<SharedData> sd;
 	ThreadLocalData ld;
 
-	PBFParseState() :
-	sd(new SharedData())
+	PBFParseState(int accessTypes) :
+	sd(new SharedData(accessTypes))
 	{}
 	
 	PBFParseState(const PBFParseState & other) : sd(other.sd) {}
 };
 
 
-Graph Graph::fromPBF(const std::string & path) {
+Graph Graph::fromPBF(const std::string & path, int accessTypes) {
 	
 	osmpbf::OSMFileIn inFile(path);
 	if (!inFile.open()) {
@@ -226,7 +231,7 @@ Graph Graph::fromPBF(const std::string & path) {
 		return Graph();
 	}
 	
-	PBFParseState ps;
+	PBFParseState ps(accessTypes);
 	
 	PBFParseState::SharedData::OsmNid2GraphNIdMap tlNIdMap;
 	NodeInfoContainer tlNI;
@@ -239,8 +244,26 @@ Graph Graph::fromPBF(const std::string & path) {
 		if (!ps.ld.hwFilter->rebuildCache()) {
 			return;
 		}
+		ps.ld.bikeDeniedFilter->assignInputAdaptor(&pbi);
+		ps.ld.bikeDeniedFilter->rebuildCache();
+		
+		ps.ld.footDeniedFilter->assignInputAdaptor(&pbi);
+		ps.ld.footDeniedFilter->rebuildCache();
+
+		
 		for(osmpbf::IWayStream way(pbi.getWayStream()); !way.isNull(); way.next()) {
 			if (ps.ld.hwFilter->matches(way) && way.refsSize() >= 2) {
+				const std::string & hwValue = way.value(ps.ld.hwFilter->matchingTag());
+				int at = (ps.sd->hw2AccessAllowance.count(hwValue) ? ps.sd->hw2AccessAllowance.at(hwValue) : Graph::Edge::AT_ALL);
+				if (ps.ld.footDeniedFilter->matches(way)) {
+					at = at & (~Graph::Edge::AT_FOOT);
+				}
+				if (ps.ld.bikeDeniedFilter->matches(way)) {
+					at = at & (~Graph::Edge::AT_BIKE);
+				}
+				if ((at & ps.sd->accessTypes) == 0) {
+					continue;
+				}
 				ps.sd->candidateWayCount += 1;
 				for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt) {
 					tlNIdMap[*refIt] = 0xFFFFFFFF;
@@ -319,10 +342,20 @@ Graph Graph::fromPBF(const std::string & path) {
 		ps.ld.footDeniedFilter->rebuildCache();
 		for(osmpbf::IWayStream way(pbi.getWayStream()); !way.isNull(); way.next()) {
 			if (ps.ld.hwFilter->matches(way) && way.refsSize() >= 2) {
-				ps.sd->candidateWayCount += 1;
 				const std::string & hwValue = way.value(ps.ld.hwFilter->matchingTag());
-				Graph::Edge::EdgeTypes et = (ps.sd->hw2EdgeType.count(hwValue) ? ps.sd->hw2EdgeType.at(hwValue) : Graph::Edge::ET_INVALID);
 				int at = (ps.sd->hw2AccessAllowance.count(hwValue) ? ps.sd->hw2AccessAllowance.at(hwValue) : Graph::Edge::AT_ALL);
+				if (ps.ld.footDeniedFilter->matches(way)) {
+					at = at & (~Graph::Edge::AT_FOOT);
+				}
+				if (ps.ld.bikeDeniedFilter->matches(way)) {
+					at = at & (~Graph::Edge::AT_BIKE);
+				}
+				if ((at & ps.sd->accessTypes) == 0) {
+					continue;
+				}
+				
+				ps.sd->candidateWayCount += 1;
+				Graph::Edge::EdgeTypes et = (ps.sd->hw2EdgeType.count(hwValue) ? ps.sd->hw2EdgeType.at(hwValue) : Graph::Edge::ET_INVALID);
 				bool isOneWay = ps.ld.onewayFilter->matches(way);
 				double maxspeed = 0.0;
 				if (ps.ld.msFilter->matches(way)) {
@@ -330,14 +363,6 @@ Graph Graph::fromPBF(const std::string & path) {
 				}
 				if (maxspeed == 0.0) {
 					maxspeed = 1000*Graph::Edge::edge_type_2_speed[et]/3.6;
-				}
-				
-				if (ps.ld.footDeniedFilter->matches(way)) {
-					at = at & (~Graph::Edge::AT_FOOT);
-				}
-				
-				if (ps.ld.bikeDeniedFilter->matches(way)) {
-					at = at & (~Graph::Edge::AT_BIKE);
 				}
 				
 				for(osmpbf::IWayStream::RefIterator refIt(way.refBegin()+1), refPrev(way.refBegin()), refEnd(way.refEnd()); refIt != refEnd; ++refIt, ++refPrev) {
