@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Graph.h"
+#include <memgraph/Graph.h>
 
 void help() {
 	std::cout << "memgraph file.osm.pbf" << std::endl;
