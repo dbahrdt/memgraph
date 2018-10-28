@@ -104,8 +104,11 @@ public:
 	Graph & operator=(Graph && other);
 	
 	inline const NodeInfoContainer & nodeInfos() const { return m_nodeInfo; }
+	inline NodeInfoContainer & nodeInfos() { return m_nodeInfo; }
 	inline const NodeContainer & nodes() const { return m_nodes; }
+	inline NodeContainer & nodes() { return m_nodes; }
 	inline const EdgeContainer & edges() const { return m_edges; }
+	inline EdgeContainer & edges() { return m_edges; }
 	
 	inline uint32_t nodeCount() const { return  m_nodes.size(); }
 	inline uint32_t edgeCount() const { return m_edges.size(); }
